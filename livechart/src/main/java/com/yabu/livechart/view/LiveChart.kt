@@ -35,8 +35,10 @@ class LiveChart(context: Context, attrs: AttributeSet? = null) : FrameLayout(con
      * Pass the attributes to the chart.
      */
     private val livechart = LiveChartView(context, attrs).apply {
-        layoutParams = LayoutParams(LayoutParams.MATCH_PARENT,
-            LayoutParams.MATCH_PARENT)
+        layoutParams = LayoutParams(
+            LayoutParams.MATCH_PARENT,
+            LayoutParams.MATCH_PARENT
+        )
     }
 
     /**
@@ -44,8 +46,10 @@ class LiveChart(context: Context, attrs: AttributeSet? = null) : FrameLayout(con
      * Pass the attributes to the view.
      */
     private val overlay = LiveChartTouchOverlay(context, attrs).apply {
-        layoutParams = LayoutParams(LayoutParams.MATCH_PARENT,
-            LayoutParams.MATCH_PARENT)
+        layoutParams = LayoutParams(
+            LayoutParams.MATCH_PARENT,
+            LayoutParams.MATCH_PARENT
+        )
     }
 
     /**
@@ -178,6 +182,17 @@ class LiveChart(context: Context, attrs: AttributeSet? = null) : FrameLayout(con
     @PublicApi
     fun drawLastPointLabel(): LiveChart {
         livechart.drawLastPointLabel()
+
+        return this
+    }
+
+    /**
+     * Draw dots on line.
+     */
+    @Suppress("UNUSED")
+    @PublicApi
+    fun drawDotsOnLine(): LiveChart {
+        livechart.drawDotsOnline()
 
         return this
     }

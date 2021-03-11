@@ -1,7 +1,15 @@
 package com.yabu.livechart.view
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.CornerPathEffect
+import android.graphics.DashPathEffect
+import android.graphics.LinearGradient
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.Shader
+import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.View
 import com.yabu.livechart.R
@@ -12,6 +20,7 @@ import com.yabu.livechart.utils.PolyBezierPathUtil
 import com.yabu.livechart.utils.PublicApi
 import com.yabu.livechart.view.LiveChartAttributes.TAG_PADDING
 import com.yabu.livechart.view.LiveChartAttributes.TAG_WIDTH
+import java.text.DecimalFormat
 import kotlin.math.max
 import kotlin.math.min
 
@@ -111,6 +120,11 @@ open class LiveChartView(context: Context, attrs: AttributeSet?) : View(context,
     private var drawLastPointLabel = false
 
     /**
+     * Draw dots on line.
+     */
+    private var drawDotsOnLine = false
+
+    /**
      * Disable baseline conditional.
      */
     private var drawBaselineConditionalColor = false
@@ -127,35 +141,58 @@ open class LiveChartView(context: Context, attrs: AttributeSet?) : View(context,
         context.theme?.obtainStyledAttributes(
             attrs,
             R.styleable.LiveChart,
-            0, 0)?.apply {
+            0, 0
+        )?.apply {
 
             try {
                 // Color attrs,
-                chartStyle.mainColor = getColor(R.styleable.LiveChart_pathColor,
-                    chartStyle.mainColor)
-                chartStyle.baselineColor = getColor(R.styleable.LiveChart_baselineColor,
-                    chartStyle.baselineColor)
-                chartStyle.mainFillColor = getColor(R.styleable.LiveChart_fillColor,
-                    chartStyle.mainFillColor)
-                chartStyle.textColor = getColor(R.styleable.LiveChart_labelTextColor,
-                    chartStyle.textColor)
-                chartStyle.positiveColor = getColor(R.styleable.LiveChart_positiveColor,
-                    chartStyle.positiveColor)
-                chartStyle.negativeColor = getColor(R.styleable.LiveChart_negativeColor,
-                    chartStyle.negativeColor)
-                chartStyle.boundsLineColor = getColor(R.styleable.LiveChart_boundsColor,
-                    chartStyle.boundsLineColor)
+                chartStyle.mainColor = getColor(
+                    R.styleable.LiveChart_pathColor,
+                    chartStyle.mainColor
+                )
+                chartStyle.baselineColor = getColor(
+                    R.styleable.LiveChart_baselineColor,
+                    chartStyle.baselineColor
+                )
+                chartStyle.mainFillColor = getColor(
+                    R.styleable.LiveChart_fillColor,
+                    chartStyle.mainFillColor
+                )
+                chartStyle.textColor = getColor(
+                    R.styleable.LiveChart_labelTextColor,
+                    chartStyle.textColor
+                )
+                chartStyle.positiveColor = getColor(
+                    R.styleable.LiveChart_positiveColor,
+                    chartStyle.positiveColor
+                )
+                chartStyle.negativeColor = getColor(
+                    R.styleable.LiveChart_negativeColor,
+                    chartStyle.negativeColor
+                )
+                chartStyle.boundsLineColor = getColor(
+                    R.styleable.LiveChart_boundsColor,
+                    chartStyle.boundsLineColor
+                )
 
                 // Width attrs,
-                chartStyle.pathStrokeWidth = getDimension(R.styleable.LiveChart_pathStrokeWidth,
-                    chartStyle.pathStrokeWidth)
-                chartStyle.baselineStrokeWidth = getDimension(R.styleable.LiveChart_baselineStrokeWidth,
-                    chartStyle.baselineStrokeWidth)
-                chartStyle.baselineDashLineGap = getDimension(R.styleable.LiveChart_baselineDashGap,
-                    chartStyle.baselineDashLineGap)
+                chartStyle.pathStrokeWidth = getDimension(
+                    R.styleable.LiveChart_pathStrokeWidth,
+                    chartStyle.pathStrokeWidth
+                )
+                chartStyle.baselineStrokeWidth = getDimension(
+                    R.styleable.LiveChart_baselineStrokeWidth,
+                    chartStyle.baselineStrokeWidth
+                )
+                chartStyle.baselineDashLineGap = getDimension(
+                    R.styleable.LiveChart_baselineDashGap,
+                    chartStyle.baselineDashLineGap
+                )
 
-                chartStyle.textHeight = getDimension(R.styleable.LiveChart_labelTextHeight,
-                    chartStyle.textHeight)
+                chartStyle.textHeight = getDimension(
+                    R.styleable.LiveChart_labelTextHeight,
+                    chartStyle.textHeight
+                )
             } finally {
                 recycle()
             }
@@ -189,8 +226,8 @@ open class LiveChartView(context: Context, attrs: AttributeSet?) : View(context,
 
         // paint color
         datasetLinePaint.color = chartStyle.mainColor
-        datasetFillPaint.color =chartStyle.mainFillColor
-        boundsLinePaint.color =chartStyle.boundsLineColor
+        datasetFillPaint.color = chartStyle.mainFillColor
+        boundsLinePaint.color = chartStyle.boundsLineColor
         guideLinePaint.color = chartStyle.guideLineColor
         baselinePaint.color = chartStyle.baselineColor
         boundsTextPaint.color = chartStyle.textColor
@@ -202,10 +239,12 @@ open class LiveChartView(context: Context, attrs: AttributeSet?) : View(context,
         baselinePaint.strokeWidth = chartStyle.baselineStrokeWidth
         // baseline path effect
         if (chartStyle.baselineDashLineGap > 0f) {
-            baselinePaint.pathEffect = DashPathEffect(floatArrayOf(
-                chartStyle.baselineDashLineWidth,
-                chartStyle.baselineDashLineGap
-            ), 0f)
+            baselinePaint.pathEffect = DashPathEffect(
+                floatArrayOf(
+                    chartStyle.baselineDashLineWidth,
+                    chartStyle.baselineDashLineGap
+                ), 0f
+            )
         }
 
         return this
@@ -295,6 +334,18 @@ open class LiveChartView(context: Context, attrs: AttributeSet?) : View(context,
 
         return this
     }
+
+    /**
+     * Draw dots on line
+     */
+    @Suppress("UNUSED")
+    @PublicApi
+    fun drawDotsOnline(): LiveChartView {
+        drawDotsOnLine = true
+
+        return this
+    }
+
 
     /**
      * Set [baseline] data point manually instead of determining from first dataset point.
@@ -415,10 +466,12 @@ open class LiveChartView(context: Context, attrs: AttributeSet?) : View(context,
         style = Paint.Style.STROKE
         strokeWidth = chartStyle.baselineStrokeWidth
         if (chartStyle.baselineDashLineGap > 0f) {
-            pathEffect = DashPathEffect(floatArrayOf(
-                chartStyle.baselineDashLineWidth,
-                chartStyle.baselineDashLineGap
-            ), 0f)
+            pathEffect = DashPathEffect(
+                floatArrayOf(
+                    chartStyle.baselineDashLineWidth,
+                    chartStyle.baselineDashLineGap
+                ), 0f
+            )
         }
         color = chartStyle.baselineColor
         strokeCap = Paint.Cap.SQUARE
@@ -482,6 +535,10 @@ open class LiveChartView(context: Context, attrs: AttributeSet?) : View(context,
         textSize = chartStyle.textHeight
     }
 
+    private var circlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        setColor()
+    }
+
     /**
      * Find the bounds data point to screen pixels ratio for the Y Axis.
      */
@@ -514,7 +571,7 @@ open class LiveChartView(context: Context, attrs: AttributeSet?) : View(context,
      * Transform a X Axis data point to screen pixels.
      */
     private fun Float.xPointToPixels(): Float {
-        return this/xBoundsToPixels()
+        return this / xBoundsToPixels()
     }
 
     /**
@@ -524,6 +581,7 @@ open class LiveChartView(context: Context, attrs: AttributeSet?) : View(context,
         datasetLinePaint.setColor()
         endPointLinePaint.setColor()
         endPointTagPaint.setColor()
+        circlePaint.setColor()
     }
 
     /**
@@ -542,7 +600,7 @@ open class LiveChartView(context: Context, attrs: AttributeSet?) : View(context,
 
             // Assign the lower bound of this chart,
             lowerBound = if (secondDataset.hasData()) {
-               min(dataset.lowerBound(), secondDataset.lowerBound())
+                min(dataset.lowerBound(), secondDataset.lowerBound())
             } else {
                 dataset.lowerBound()
             }
@@ -611,18 +669,26 @@ open class LiveChartView(context: Context, attrs: AttributeSet?) : View(context,
                 dataset.points.forEachIndexed { index, point ->
                     // move path to first data point,
                     if (index == 0) {
-                        moveTo(chartBounds.start + point.x.xPointToPixels(),
-                            point.y.yPointToPixels())
+                        moveTo(
+                            chartBounds.start + point.x.xPointToPixels(),
+                            point.y.yPointToPixels()
+                        )
                         return@forEachIndexed
                     }
 
-                    lineTo(chartBounds.start + point.x.xPointToPixels(),
-                        point.y.yPointToPixels())
+                    lineTo(
+                        chartBounds.start + point.x.xPointToPixels(),
+                        point.y.yPointToPixels()
+                    )
                 }
-                lineTo(chartBounds.start + dataset.points.last().x.xPointToPixels(),
-                    chartBounds.bottom)
-                lineTo(chartBounds.start + dataset.points.first().x.xPointToPixels(),
-                    chartBounds.bottom)
+                lineTo(
+                    chartBounds.start + dataset.points.last().x.xPointToPixels(),
+                    chartBounds.bottom
+                )
+                lineTo(
+                    chartBounds.start + dataset.points.first().x.xPointToPixels(),
+                    chartBounds.bottom
+                )
             }
 
             // Gradient paint
@@ -637,13 +703,15 @@ open class LiveChartView(context: Context, attrs: AttributeSet?) : View(context,
             }
 
             if (drawGradientFill) {
-                datasetFillPaint.shader = LinearGradient(chartBounds.start,
+                datasetFillPaint.shader = LinearGradient(
+                    chartBounds.start,
                     dataset.upperBound().yPointToPixels(),
                     chartBounds.start,
                     chartBounds.bottom,
                     fillColor,
                     Color.parseColor(LiveChartAttributes.TRANSPARENT_COLOR),
-                    Shader.TileMode.CLAMP)
+                    Shader.TileMode.CLAMP
+                )
             } else {
                 datasetFillPaint.color = fillColor
             }
@@ -667,15 +735,16 @@ open class LiveChartView(context: Context, attrs: AttributeSet?) : View(context,
         if (drawVerticalGuidelines) {
             for (i in 0..verticalGuidelineStep) {
                 // draw vertical guidelines
-                canvas.drawLine((if (drawYBounds)
-                    (chartBounds.end - chartStyle.chartEndPadding)/verticalGuidelineStep
-                else
-                    chartBounds.end/verticalGuidelineStep)*i,
+                canvas.drawLine(
+                    (if (drawYBounds)
+                        (chartBounds.end - chartStyle.chartEndPadding) / verticalGuidelineStep
+                    else
+                        chartBounds.end / verticalGuidelineStep) * i,
                     chartBounds.bottom,
                     (if (drawYBounds)
-                        (chartBounds.end - chartStyle.chartEndPadding)/verticalGuidelineStep
+                        (chartBounds.end - chartStyle.chartEndPadding) / verticalGuidelineStep
                     else
-                        chartBounds.end/verticalGuidelineStep)*i,
+                        chartBounds.end / verticalGuidelineStep) * i,
                     chartBounds.top,
                     guideLinePaint
                 )
@@ -685,13 +754,14 @@ open class LiveChartView(context: Context, attrs: AttributeSet?) : View(context,
         if (drawHorizontalGuidelines) {
             for (i in 0..horizontalGuidelineStep) {
                 // draw vertical guidelines
-                canvas.drawLine(chartBounds.start,
-                    (chartBounds.bottom/horizontalGuidelineStep)*i,
+                canvas.drawLine(
+                    chartBounds.start,
+                    (chartBounds.bottom / horizontalGuidelineStep) * i,
                     if (drawYBounds)
                         (chartBounds.end - chartStyle.chartEndPadding)
                     else
                         chartBounds.end,
-                    (chartBounds.bottom/horizontalGuidelineStep)*i,
+                    (chartBounds.bottom / horizontalGuidelineStep) * i,
                     guideLinePaint
                 )
             }
@@ -699,92 +769,133 @@ open class LiveChartView(context: Context, attrs: AttributeSet?) : View(context,
 
         if (drawBaseline) {
             // draw baseline
-            canvas.drawLine(chartBounds.start,
+            canvas.drawLine(
+                chartBounds.start,
                 baseline.yPointToPixels(),
                 // account for end padding only if Y Bounds are visible
-                chartBounds.end  - if (drawYBounds) chartStyle.chartEndPadding else 0f,
+                chartBounds.end - if (drawYBounds) chartStyle.chartEndPadding else 0f,
                 baseline.yPointToPixels(),
-                baselinePaint)
+                baselinePaint
+            )
         }
 
         if (secondDataset.points.size > 1) {
-            canvas.drawPath(secondDatasetPath,
-                secondDatasetPaint)
+            canvas.drawPath(
+                secondDatasetPath,
+                secondDatasetPaint
+            )
         }
 
         // draw dataset
-        canvas.drawPath(datasetPath,
-            datasetLinePaint)
+        canvas.drawPath(
+            datasetPath,
+            datasetLinePaint
+        )
 
         if (drawFill) {
-            canvas.drawPath(datasetFillPath,
-                datasetFillPaint)
+            canvas.drawPath(
+                datasetFillPath,
+                datasetFillPaint
+            )
         }
 
         if (drawYBounds) {
             // draw y Bounds line,
-            canvas.drawLine(chartBounds.end - chartStyle.chartEndPadding,
+            canvas.drawLine(
+                chartBounds.end - chartStyle.chartEndPadding,
                 chartBounds.top,
                 chartBounds.end - chartStyle.chartEndPadding,
                 chartBounds.bottom,
-                boundsLinePaint)
+                boundsLinePaint
+            )
 
             // LOWER BOUND
-            canvas.drawText("%.2f".format(lowerBound),
+            canvas.drawText(
+                lowerBound.formatForBounds(),
                 chartBounds.end - chartStyle.chartEndPadding + TAG_PADDING,
                 chartBounds.bottom,
-                boundsTextPaint)
+                boundsTextPaint
+            )
 
             // FIRST QUARTER BOUND
             canvas.drawText(
-                "%.2f".format(upperBound-(upperBound - lowerBound)/4f),
+                (upperBound - (upperBound - lowerBound) / 4f).formatForBounds(),
                 chartBounds.end - chartStyle.chartEndPadding + TAG_PADDING,
-                chartBounds.top + chartBounds.bottom/4f,
-                boundsTextPaint)
+                chartBounds.top + chartBounds.bottom / 4f,
+                boundsTextPaint
+            )
 
             // MIDDLE BOUND
             canvas.drawText(
-                "%.2f".format(upperBound-(upperBound - lowerBound)/2f),
+                (upperBound - (upperBound - lowerBound) / 2f).formatForBounds(),
                 chartBounds.end - chartStyle.chartEndPadding + TAG_PADDING,
-                chartBounds.top + chartBounds.bottom/2f,
-                boundsTextPaint)
+                chartBounds.top + chartBounds.bottom / 2f,
+                boundsTextPaint
+            )
 
             // THIRD QUARTER BOUND
             canvas.drawText(
-                "%.2f".format(upperBound-(upperBound - lowerBound)*0.75f),
+                (upperBound - (upperBound - lowerBound) * 0.75f).formatForBounds(),
                 chartBounds.end - chartStyle.chartEndPadding + TAG_PADDING,
-                chartBounds.top + chartBounds.bottom*0.75f,
-                boundsTextPaint)
+                chartBounds.top + chartBounds.bottom * 0.75f,
+                boundsTextPaint
+            )
 
             // UPPER BOUND
-            canvas.drawText("%.2f".format(upperBound),
+            canvas.drawText(
+                upperBound.formatForBounds(),
                 chartBounds.end - chartStyle.chartEndPadding + TAG_PADDING,
                 chartBounds.top,
-                boundsTextPaint)
+                boundsTextPaint
+            )
 
             // Last Point Label
             if (drawLastPointLabel) {
                 // draw end tag line
-                canvas.drawLine(chartBounds.start,
+                canvas.drawLine(
+                    chartBounds.start,
                     dataset.points.last().y.yPointToPixels(),
                     chartBounds.end - chartStyle.chartEndPadding,
                     dataset.points.last().y.yPointToPixels(),
-                    endPointLinePaint)
+                    endPointLinePaint
+                )
 
                 // TAG
-                canvas.drawRect(chartBounds.end - chartStyle.chartEndPadding,
+                canvas.drawRect(
+                    chartBounds.end - chartStyle.chartEndPadding,
                     dataset.points.last().y.yPointToPixels() -
                             chartStyle.textHeight -
                             TAG_PADDING,
                     chartBounds.end - chartStyle.chartEndPadding + TAG_WIDTH,
                     dataset.points.last().y.yPointToPixels(),
-                    endPointTagPaint)
+                    endPointTagPaint
+                )
 
-                canvas.drawText("%.2f".format(dataset.points.last().y),
+                canvas.drawText(
+                    "%.2f".format(dataset.points.last().y),
                     chartBounds.end - chartStyle.chartEndPadding + TAG_PADDING,
                     dataset.points.last().y.yPointToPixels() - TAG_PADDING,
-                    endPointTagTextPaint)
+                    endPointTagTextPaint
+                )
             }
+
+            if (drawDotsOnLine) {
+                dataset.points.map {
+                    canvas.drawCircle(
+                        it.x.xPointToPixels(),
+                        it.y.yPointToPixels(),
+                        9f,
+                        circlePaint
+                    )
+                }
+            }
+        }
+    }
+
+    private fun Float?.formatForBounds(): String {
+        return when {
+            this == null || this == 0f -> "0"
+            else ->  "%.1f".format(this)
         }
     }
 
