@@ -94,10 +94,10 @@ class MainActivity : AppCompatActivity() {
             .drawSmoothPath()
             .drawBaseline()
             .drawFill()
+            .drawDotsOnLine()
             .drawHorizontalGuidelines(steps = 4)
             .drawVerticalGuidelines(steps = 4)
             .drawBaselineConditionalColor()
-            .drawLastPointLabel()
             .setOnTouchCallbackListener(object : LiveChart.OnTouchCallback {
                 @SuppressLint("SetTextI18n")
                 override fun onTouchCallback(point: DataPoint) {
